@@ -1,105 +1,97 @@
-import Alert from '@mui/material/Alert';
-import { Button, CircularProgress,Stack, TextField } from "@mui/material";
+import { Button, CircularProgress, Stack, TextField } from "@mui/material";
 import { Box } from "@mui/system";
 import axios from "axios";
 import { useSnackbar } from "notistack";
 import React, { useState } from "react";
+import { useHistory, Link } from "react-router-dom";
 import { config } from "../App";
 import Footer from "./Footer";
 import Header from "./Header";
-import "./Register.css";
-import { useHistory, Link } from "react-router-dom";
-import { AlertTitle } from '@mui/material';
+import "./Login.css";
 
-const Register = () => {
+const Login = () => {
   const { enqueueSnackbar } = useSnackbar();
   const [formData,setFormData]=useState({
     username: '',
-    password: '',
-    confirmPassword:''
+    password: ''
   });
+
   const [flag,setFlag]=useState(true);
   const history=useHistory();
 
-
-  // TODO: CRIO_TASK_MODULE_REGISTER - Implement the register function
+  // TODO: CRIO_TASK_MODULE_LOGIN - Fetch the API response
   /**
-   * Definition for register handler
-   * - Function to be called when the user clicks on the register button or submits the register form
-   *
-   * @param {{ username: string, password: string, confirmPassword: string }} formData
+   * Perform the Login API call
+   * @param {{ username: string, password: string }} formData
    *  Object with values of username, password and confirm password user entered to register
    *
-   * API endpoint - "POST /auth/register"
+   * API endpoint - "POST /auth/login"
    *
-   * Example for successful response from backend for the API call:
+   * Example for successful response from backend:
    * HTTP 201
    * {
    *      "success": true,
+   *      "token": "testtoken",
+   *      "username": "criodo",
+   *      "balance": 5000
    * }
    *
-   * Example for failed response from backend for the API call:
+   * Example for failed response from backend:
    * HTTP 400
    * {
    *      "success": false,
-   *      "message": "Username is already taken"
+   *      "message": "Password is incorrect"
    * }
+   *
    */
-  const register = async (e) => {
-    console.log(formData);
-    await axios.post(`${config.endpoint}/auth/register`,{
+  const login = async (e) => {
+
+    await axios.post(`${config.endpoint}/auth/login`,{
       username: formData.username,
       password: formData.password
-     
-    },{
-      headers: {'Content-Type': 'application/json'}
-    }
-    )
+    })
     .then((res)=>{
-      console.log(res);
-      //alert('success');
       setFlag(true);
-       
-      
-      enqueueSnackbar("success", { autoHideDuration: 3000,variant: 'success' });
-      history.push('/login');
-  
+      console.log(res);
+      persistLogin(res.data.token,res.data.username,res.data.balance);
+      enqueueSnackbar("Logged in successfully", { autoHideDuration: 3000,variant: 'success' });
+      history.push('/');
     })
     .catch((err)=>{
       setFlag(true);
   
       if(err.response && err.response.status===400){
-        enqueueSnackbar(err.response.data.message, { autoHideDuration: 3000,variant: 'error' });
+       return  enqueueSnackbar(err.response.data.message, { autoHideDuration: 3000,variant: 'error' });
       }
       else{
-        enqueueSnackbar('Something went wrong. Check that the backend is running, reachable and returns valid JSON.', { autoHideDuration: 3000,variant: 'error' });
+        return enqueueSnackbar('Something went wrong. Check that the backend is running, reachable and returns valid JSON.', { autoHideDuration: 3000,variant: 'error' });
       }
     })
-   };
+  };
 
-  
-
-  // TODO: CRIO_TASK_MODULE_REGISTER - Implement user input validation logic
+  // TODO: CRIO_TASK_MODULE_LOGIN - Validate the input
   /**
    * Validate the input values so that any bad or illegal values are not passed to the backend.
    *
-   * @param {{ username: string, password: string, confirmPassword: string }} data
+   * @param {{ username: string, password: string }} data
    *  Object with values of username, password and confirm password user entered to register
    *
    * @returns {boolean}
    *    Whether validation has passed or not
    *
-   * Return false if any validation condition fails, otherwise return true.
+   * Return false and show warning message if any validation condition fails, otherwise return true.
    * (NOTE: The error messages to be shown for each of these cases, are given with them)
    * -    Check that username field is not an empty value - "Username is a required field"
-   * -    Check that username field is not less than 6 characters in length - "Username must be at least 6 characters"
    * -    Check that password field is not an empty value - "Password is a required field"
-   * -    Check that password field is not less than 6 characters in length - "Password must be at least 6 characters"
-   * -    Check that confirmPassword field has the same value as password field - Passwords do not match
    */
   const validateInput = (data) => {
-    if(formData.username==='' || formData.password==='' || formData.confirmPassword===''){
-      enqueueSnackbar('All the fields are required',{autoHideDuration: 3000, variant: 'warning'});
+   
+    if (!formData.username) {
+      enqueueSnackbar("Username is required field", {autoHideDuration: 3000, variant: "warning" });
+      
+    }
+   else if (!formData.password) {
+      enqueueSnackbar("Password is a required field", {autoHideDuration: 3000, variant: "warning" });
     }
     else if(formData.username.length<6){
       enqueueSnackbar('Username must be atleast 6 characters length',{autoHideDuration: 3000, variant: 'warning'})
@@ -107,13 +99,32 @@ const Register = () => {
     else if(formData.password.length<6){
       enqueueSnackbar('Password must be atleast 6 characters length',{autoHideDuration: 3000, variant: 'warning'})
     }
-    else if(formData.password!==formData.confirmPassword){
-      enqueueSnackbar('Password and Confirm Password do not match',{autoHideDuration: 3000, variant: 'warning'})
-    }
     else{
       setFlag(false);
-      register();
+      login();
     }
+  };
+
+  // TODO: CRIO_TASK_MODULE_LOGIN - Persist user's login information
+  /**
+   * Store the login information so that it can be used to identify the user in subsequent API calls
+   *
+   * @param {string} token
+   *    API token used for authentication of requests after logging in
+   * @param {string} username
+   *    Username of the logged in user
+   * @param {string} balance
+   *    Wallet balance amount of the logged in user
+   *
+   * Make use of localStorage: https://developer.mozilla.org/en-US/docs/Web/API/Window/localStorage
+   * -    `token` field in localStorage can be used to store the Oauth token
+   * -    `username` field in localStorage can be used to store the username that the user is logged in as
+   * -    `balance` field in localStorage can be used to store the balance amount in the user's wallet
+   */
+  const persistLogin = (token, username, balance) => {
+    localStorage.setItem('token',token);
+    localStorage.setItem('username',username);
+    localStorage.setItem('balance',balance);
   };
 
   return (
@@ -126,8 +137,8 @@ const Register = () => {
       <Header hasHiddenAuthButtons />
       <Box className="content">
         <Stack spacing={2} className="form">
-          <h2 className="title">Register</h2>
-          <TextField
+        <h2 className="title">Login</h2>
+        <TextField
             id="username"
             label="Username"
             variant="outlined"
@@ -148,24 +159,15 @@ const Register = () => {
             fullWidth
             placeholder="Enter a password with minimum 6 characters"
           />
-          <TextField
-            id="confirmPassword"
-            variant="outlined"
-            label="Confirm Password"
-            onChange={(e)=>{setFormData({...formData,confirmPassword: e.target.value})}}
-            name="confirmPassword"
-            type="password"
-            fullWidth
-          />
-           {flag ? (<Button className="button" variant="contained" onClick={validateInput} type='submit'>
-            Register Now
+          {flag ? (<Button className="button" variant="contained" onClick={validateInput} type='submit'>
+          LOGIN TO QKART
            </Button>):  <Box sx={{ display: 'flex',justifyContent: 'center'}}>
                           <CircularProgress style={{width:'30px',height:'30px'}} />
                       </Box>}
           <p className="secondary-action">
-            Already have an account?{" "}
-             <Link className="link" to="/login">
-              Login here
+          Don’t have an account?{" "}
+             <Link className="link" to="/register">
+              Register now
              </Link>
           </p>
         </Stack>
@@ -175,4 +177,4 @@ const Register = () => {
   );
 };
 
-export default Register;
+export default Login;
