@@ -90,6 +90,8 @@ export const getTotalCartValue = (items = []) => {
  * @param {Function} handleDelete
  *    Handler function which reduces the quantity of a product in cart by 1
  * 
+ * @param {Boolean} isReadOnly
+ *    If product quantity on cart is to be displayed as read only without the + - options to change quantity
  * 
  */
 const ItemQuantity = ({
@@ -116,6 +118,13 @@ const ItemQuantity = ({
   );
 };
 
+const getTotalItems = (items) =>{
+  let sum=items.reduce((acc,item)=>{
+    return acc+item.qty;
+  },0);
+  return sum;
+}
+
 /**
  * Component to display the Cart view
  * 
@@ -128,6 +137,8 @@ const ItemQuantity = ({
  * @param {Function} handleDelete
  *    Current quantity of product in cart
  * 
+ * @param {Boolean} isReadOnly
+ *    If product quantity on cart is to be displayed as read only without the + - options to change quantity
  * 
  */
 const Cart = ({
@@ -230,7 +241,7 @@ const Cart = ({
           </Box>
         </Box>
 
-        <Box display="flex" justifyContent="flex-end" className="cart-footer">
+        {isReadOnly?null:<Box display="flex" justifyContent="flex-end" className="cart-footer">
           <Button
             color="primary"
             variant="contained"
@@ -242,8 +253,82 @@ const Cart = ({
           >
             Checkout
           </Button>
-        </Box>
+        </Box>}
       </Box>
+      {isReadOnly?(
+          <Box
+          className="cart"
+          display="flex"
+          flexDirection="column"
+          padding="1rem"
+          >
+            <h3>Order Details</h3>
+          <Box
+          display="flex"
+          justifyContent="space-between"
+          alignItems="center"
+          pb="0.5rem"
+        >
+          <Box color="#3C3C3C" alignSelf="center">
+            Products
+          </Box>
+          <Box
+            color="#3C3C3C"
+            alignSelf="center"
+          >
+            {getTotalItems(items)}
+          </Box>
+        </Box>
+        <Box
+          display="flex"
+          justifyContent="space-between"
+          alignItems="center"
+          pb="0.5rem"
+        >
+          <Box color="#3C3C3C" alignSelf="center">
+            Subtotal
+          </Box>
+          <Box
+            color="#3C3C3C"
+            alignSelf="center"
+          >
+            ${getTotalCartValue(items)}
+          </Box>
+        </Box>
+        <Box
+          display="flex"
+          justifyContent="space-between"
+          alignItems="center"
+          pb="0.5rem"
+        >
+          <Box color="#3C3C3C" alignSelf="center">
+            Shipping Charges
+          </Box>
+          <Box
+            color="#3C3C3C"
+            alignSelf="center"
+          >
+            ${0}
+          </Box>
+        </Box>
+        <Box
+          display="flex"
+          justifyContent="space-between"
+          alignItems="center"
+          pb="0.5rem"
+        >
+          <Box color="#3C3C3C" alignSelf="center">
+            Total
+          </Box>
+          <Box
+            color="#3C3C3C"
+            alignSelf="center"
+          >
+            ${getTotalCartValue(items)}
+          </Box>
+        </Box>
+          </Box>
+        ):null}
     </>
   );
 };

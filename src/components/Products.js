@@ -39,10 +39,10 @@ import "./Products.css";
 
 const Products = () => {
   const { enqueueSnackbar } = useSnackbar();
-  const token = localStorage.getItem("token");
+  const token = localStorage.getItem("token"); // Auth token
   const [loading,setLoading]=useState(true);
-  const [products, setProducts] = useState([]);
-  const [filteredProducts, setFilteredProducts] = useState({});
+  const [products, setProducts] = useState([]); // List of all available products
+  const [filteredProducts, setFilteredProducts] = useState({}); // List of filtered products through search bar
   const [debounceTimeout, setDebounceTimeout] = useState(null);
   const [items, setItems] = useState([]);
 
